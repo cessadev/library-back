@@ -38,10 +38,6 @@ La aplicación sigue el patrón de arquitectura hexagonal (también conocida com
 
 ## 📦 Compilación
 
-```bash
-mvn clean package
-```
-
 Plugin de Maven utilizando:
 
 ```bash
@@ -57,6 +53,34 @@ Plugin de Maven utilizando:
 </plugin>
 ```
 
+Ubicate en la raiz del proyecto y ejecuta:
+
+```bash
+mvn clean package
+```
+
+## ✅ Levantar base de datos Oracle con Docker Compose
+
+Asegúrate de tener Docker instalado. Luego ejecuta:
+
+```bash
+docker-compose up -d
+```
+
+## ▶️ Ejecuta la aplicación
+
+Ubicate en la raíz del proyecto, y ejecuta:
+
+```bash
+mvn spring-boot:run
+```
+
+O bien desde las opciones de ejecución del IDE.
+
 ---
 
-▶️ Ejecución
+Esta prueba técnica fue desarrollada como parte de un proceso de selección.
+Quedo atento a cualquier observación, mejora o ampliación que deseen discutir.
+
+¡Gracias por su tiempo y evaluación!
+
