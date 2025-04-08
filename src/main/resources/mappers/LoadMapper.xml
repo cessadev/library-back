@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cessadev.library_system.infrastructure.adapters.persistence.mapper.LoanMapper">
+
+    <resultMap id="LoanResultMap" type="com.cessadev.library_system.domain.Loan">
+        <id property="id" column="id"/>
+        <result property="loanDate" column="loan_date" jdbcType="DATE"/>
+        <result property="estimatedReturnDate" column="estimated_return_date" jdbcType="DATE"/>
+        <result property="actualReturnDate" column="actual_return_date" jdbcType="DATE"/>
+        <result property="status" column="loan_status" jdbcType="VARCHAR"
+                typeHandler="com.cessadev.library_system.infrastructure.config.mybatis.handler.LoanStatusTypeHandler"
+                javaType="com.cessadev.library_system.domain.enums.ELoanStatus"/>
+
+        <association property="copyBook" javaType="com.cessadev.library_system.domain.CopyBook">
+            <id property="id" column="bookcopy_id" jdbcType="NUMERIC"/>
+            <result property="code" column="copy_code" jdbcType="VARCHAR"/>
+            <association property="book" javaType="com.cessadev.library_system.domain.Book">
+                <id property="id" column="book_id" jdbcType="NUMERIC"/>
+                <result property="title" column="book_title" jdbcType="VARCHAR"/>
+            </association>
+        </association>
+
+        <association property="student" javaType="com.cessadev.library_system.domain.Student">
+            <id property="id" column="student_id" jdbcType="NUMERIC"/>
+            <result property="name" column="student_name" jdbcType="VARCHAR"/>
+            <result property="lastname" column="student_lastname" jdbcType="VARCHAR"/>
+        </association>
+    </resultMap>
+
+    <select id="findAll" resultMap="LoanResultMap">
+        SELECT
+        l.id,
+        l.loan_date,
+        l.estimated_return_date,
+        l.actual_return_date,
+        l.loan_status,
+        cb.id as copybook_id,
+        cb.code as copybook_code,
+        cb.status as copybook_status,
+        cb.book_id as book_id,
+        b.title as book_title,
+        s.id as student_id,
+        s.name as student_name,
+        s.lastname as student_lastname,
+        s.identification as student_identification
+        FROM Loan l
+        INNER JOIN BookCopy cb ON l.bookcopy_id = cb.id
+        INNER JOIN Book b ON cb.book_id = b.id
+        INNER JOIN Student s ON l.student_id = s.id
+        ORDER BY l.loan_date DESC
+    </select>
+
+    <!-- Insertar un nuevo préstamo -->
+    <insert id="save" parameterType="com.cessadev.library_system.domain.Loan">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">
+            SELECT loan_seq.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO Loan (
+        id,
+        bookcopy_id,
+        student_id,
+        loan_date,
+        estimated_return_date,
+        loan_status
+        ) VALUES (
+        #{id,jdbcType=NUMERIC},
+        #{copyBook.id,jdbcType=NUMERIC},
+        #{student.id,jdbcType=NUMERIC},
+        #{loanDate,jdbcType=DATE},
+        #{estimatedReturnDate,jdbcType=DATE},
+        #{status,jdbcType=VARCHAR,typeHandler=com.cessadev.library_system.infrastructure.config.mybatis.handler.LoanStatusTypeHandler}
+        )
+    </insert>
+
+    <!-- Actualizar un préstamo existente -->
+    <update id="update" parameterType="com.cessadev.library_system.domain.Loan">
+        UPDATE Loan
+        SET actual_return_date = #{actualReturnDate,jdbcType=DATE},
+        loan_status = #{status,jdbcType=VARCHAR,typeHandler=com.cessadev.library_system.infrastructure.config.mybatis.handler.LoanStatusTypeHandler}
+        WHERE id = #{id,jdbcType=NUMERIC}
+    </update>
+
+    <!-- Obtener préstamo por ID -->
+    <select id="findById" parameterType="java.lang.Long" resultMap="LoanResultMap">
+        SELECT
+        l.*,
+        cb.code as copy_code,
+        cb.book_id as book_id,
+        b.title as book_title,
+        s.name as student_name,
+        s.lastname as student_lastname
+        FROM Loan l
+        JOIN BookCopy cb ON l.bookcopy_id = cb.id
+        JOIN Book b ON cb.book_id = b.id
+        JOIN Student s ON l.student_id = s.id
+        WHERE l.id = #{id,jdbcType=NUMERIC}
+    </select>
+
+    <!-- Obtener préstamos activos por estudiante -->
+    <select id="findActiveLoansByStudent" parameterType="java.lang.Long" resultMap="LoanResultMap">
+        SELECT
+        l.*,
+        cb.code as copy_code,
+        cb.book_id as book_id,
+        b.title as book_title,
+        s.name as student_name,
+        s.lastname as student_lastname
+        FROM Loan l
+        JOIN BookCopy cb ON l.bookcopy_id = cb.id
+        JOIN Book b ON cb.book_id = b.id
+        JOIN Student s ON l.student_id = s.id
+        WHERE l.student_id = #{studentId,jdbcType=NUMERIC}
+        AND l.loan_status = 'ACTIVE'
+        ORDER BY l.loan_date DESC
+    </select>
+
+    <!-- Obtener préstamo activo por ejemplar -->
+    <select id="findActiveLoanByCopy" parameterType="java.lang.Long" resultMap="LoanResultMap">
+        SELECT
+        l.*,
+        cb.code as copy_code,
+        cb.book_id as book_id,
+        b.title as book_title,
+        s.name as student_name,
+        s.lastname as student_lastname
+        FROM Loan l
+        JOIN BookCopy cb ON l.bookcopy_id = cb.id
+        JOIN Book b ON cb.book_id = b.id
+        JOIN Student s ON l.student_id = s.id
+        WHERE l.bookcopy_id = #{copyId,jdbcType=NUMERIC}
+        AND l.loan_status = 'ACTIVE'
+    </select>
+
+    <!-- Obtener préstamos vencidos -->
+    <select id="findOverdueLoans" resultMap="LoanResultMap">
+        SELECT
+        l.*,
+        cb.code as copy_code,
+        cb.book_id as book_id,
+        b.title as book_title,
+        s.name as student_name,
+        s.lastname as student_lastname
+        FROM Loan l
+        JOIN BookCopy cb ON l.bookcopy_id = cb.id
+        JOIN Book b ON cb.book_id = b.id
+        JOIN Student s ON l.student_id = s.id
+        WHERE l.loan_status = 'ACTIVE'
+        AND l.estimated_return_date &lt; CURRENT_DATE
+        ORDER BY l.estimated_return_date ASC
+    </select>
+
+    <!-- Obtener préstamos por libro -->
+    <select id="findLoansByBook" parameterType="java.lang.Long" resultMap="LoanResultMap">
+        SELECT
+        l.*,
+        cb.code as copy_code,
+        cb.book_id as book_id,
+        b.title as book_title,
+        s.name as student_name,
+        s.lastname as student_lastname
+        FROM Loan l
+        JOIN BookCopy cb ON l.bookcopy_id = cb.id
+        JOIN Book b ON cb.book_id = b.id
+        JOIN Student s ON l.student_id = s.id
+        WHERE cb.book_id = #{bookId,jdbcType=NUMERIC}
+        ORDER BY l.loan_date DESC
+    </select>
+
+    <!-- Contar préstamos activos por estudiante -->
+    <select id="countActiveLoansByStudent" parameterType="java.lang.Long" resultType="int">
+        SELECT COUNT(id)
+        FROM Loan
+        WHERE student_id = #{studentId,jdbcType=NUMERIC}
+        AND loan_status = 'ACTIVE'
+    </select>
+</mapper>

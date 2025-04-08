@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cessadev.library_system.infrastructure.adapters.persistence.mapper.BookMapper">
+
+    <resultMap id="BookResultMap" type="com.cessadev.library_system.domain.Book">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="author" column="author"/>
+        <result property="isbn" column="isbn"/>
+        <result property="description" column="description"/>
+        <result property="yearPublication" column="year_publication"/>
+
+        <association property="category" javaType="com.cessadev.library_system.domain.Category">
+            <id property="id" column="category_id"/>
+            <result property="name" column="category_name"/>
+            <result property="description" column="category_description"/>
+        </association>
+    </resultMap>
+
+    <resultMap id="BookSimpleResultMap" type="com.cessadev.library_system.domain.dto.BookSimpleDTO">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="isbn" column="isbn"/>
+        <association property="category" javaType="com.cessadev.library_system.domain.Category">
+            <id property="id" column="category_id"/>
+        </association>
+    </resultMap>
+
+    <!-- Consulta para obtener todos los libros con información de categoría -->
+    <select id="findAll" resultMap="BookResultMap">
+        SELECT b.*, c.name as category_name, c.description as category_description
+        FROM Book b
+        LEFT JOIN Category c ON b.category_id = c.id
+    </select>
+
+    <select id="findByCategoryId" parameterType="java.lang.Long" resultMap="BookResultMap">
+        SELECT
+        b.id,
+        b.title,
+        b.author,
+        b.isbn,
+        b.description,
+        b.year_publication,
+        b.category_id,
+        c.name as category_name,
+        c.description as category_description
+        FROM Book b
+        LEFT JOIN Category c ON b.category_id = c.id
+        WHERE b.category_id = #{categoryId,jdbcType=NUMERIC}
+        ORDER BY b.title ASC
+    </select>
+
+    <!-- Consulta para obtener un libro por ID -->
+    <select id="findById" parameterType="java.lang.Long" resultMap="BookResultMap">
+        SELECT b.*, c.name as category_name, c.description as category_description
+        FROM Book b
+        LEFT JOIN Category c ON b.category_id = c.id
+        WHERE b.id = #{id}
+    </select>
+
+    <!-- Insertar un nuevo libro -->
+    <insert id="save" parameterType="com.cessadev.library_system.domain.Book">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">
+            SELECT book_seq.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO Book (id, title, author, isbn, description, year_publication, category_id)
+        VALUES (
+        #{id,jdbcType=NUMERIC},
+        #{title,jdbcType=VARCHAR},
+        #{author,jdbcType=VARCHAR},
+        #{isbn,jdbcType=VARCHAR},
+        #{description,jdbcType=VARCHAR},
+        #{yearPublication,jdbcType=NUMERIC},
+        #{category.id,jdbcType=NUMERIC}
+        )
+    </insert>
+
+    <!-- Actualizar un libro existente -->
+    <update id="update" parameterType="com.cessadev.library_system.domain.Book">
+        UPDATE Book
+        SET title = #{title,jdbcType=VARCHAR},
+        author = #{author,jdbcType=VARCHAR},
+        isbn = #{isbn,jdbcType=VARCHAR},
+        description = #{description,jdbcType=VARCHAR},
+        year_publication = #{yearPublication,jdbcType=NUMERIC},
+        category_id = #{category.id,jdbcType=NUMERIC}
+        WHERE id = #{id,jdbcType=NUMERIC}
+    </update>
+
+    <!-- Buscar por ISBN -->
+    <select id="findByIsbn" parameterType="java.lang.String" resultMap="BookResultMap">
+        SELECT b.*, c.name as category_name, c.description as category_description
+        FROM Book b
+        LEFT JOIN Category c ON b.category_id = c.id
+        WHERE b.isbn = #{isbn}
+    </select>
+
+    <!-- Eliminar un libro por ID -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM Book WHERE id = #{id}
+    </delete>
+
+    <select id="existsById" resultType="boolean">
+        SELECT CASE WHEN COUNT(id) > 0 THEN 1 ELSE 0 END
+        FROM Book
+        WHERE id = #{id}
+    </select>
+</mapper>

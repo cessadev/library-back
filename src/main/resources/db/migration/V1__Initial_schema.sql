@@ -1,0 +1,57 @@
+-- Creación de secuencias
+CREATE SEQUENCE category_seq START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE book_seq START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE student_seq START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE bookcopy_seq START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE loan_seq START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+
+-- Creación de tablas
+CREATE TABLE Category (
+    id NUMBER PRIMARY KEY,
+    name VARCHAR2(100) NOT NULL,
+    description VARCHAR2(500),
+    CONSTRAINT chk_name CHECK (name IN ('MATH', 'ENGINEERING', 'HEALTH', 'ART', 'HISTORY', 'ECONOMICS', 'GEOGRAPHY', 'NURSING', 'INFORMATION', 'TECHNOLOGY', 'ELECTRONICS', 'COMPUTER', 'SCIENCE', 'PSYCHOLOGY'))
+);
+
+CREATE TABLE Book (
+    id NUMBER PRIMARY KEY,
+    title VARCHAR2(200) NOT NULL,
+    author VARCHAR2(100) NOT NULL,
+    isbn VARCHAR2(20) UNIQUE NOT NULL,
+    description VARCHAR2(1000),
+    year_publication NUMBER(4),
+    category_id NUMBER,
+    CONSTRAINT fk_book_category FOREIGN KEY (category_id) REFERENCES Category(id)
+);
+
+CREATE TABLE Student (
+    id NUMBER PRIMARY KEY,
+    name VARCHAR2(50) NOT NULL,
+    lastname VARCHAR2(50) NOT NULL,
+    identification VARCHAR2(20) UNIQUE NOT NULL,
+    email VARCHAR2(100) UNIQUE NOT NULL,
+    course VARCHAR2(50) NOT NULL,
+    CONSTRAINT chk_course CHECK (course IN ('ENGINEERING', 'MEDICINE', 'ADMINISTRATION', 'LITERATURE', 'PSYCHOLOGY', 'NURSING', 'ARTS', 'ACCOUNTING'))
+);
+
+CREATE TABLE BookCopy (
+    id NUMBER PRIMARY KEY,
+    code VARCHAR2(20) UNIQUE NOT NULL,
+    status VARCHAR2(20) NOT NULL,
+    book_id NUMBER NOT NULL,
+    CONSTRAINT fk_copy_book FOREIGN KEY (book_id) REFERENCES Book(id),
+    CONSTRAINT chk_status CHECK (status IN ('AVAILABLE', 'LOANED', 'MAINTENANCE', 'LOST'))
+);
+
+CREATE TABLE Loan (
+    id NUMBER PRIMARY KEY,
+    bookcopy_id NUMBER NOT NULL,
+    student_id NUMBER NOT NULL,
+    loan_date DATE NOT NULL,
+    estimated_return_date DATE NOT NULL,
+    actual_return_date DATE,
+    loan_status VARCHAR2(20) NOT NULL,
+    CONSTRAINT fk_loan_copy FOREIGN KEY (bookcopy_id) REFERENCES BookCopy(id),
+    CONSTRAINT fk_loan_student FOREIGN KEY (student_id) REFERENCES Student(id),
+    CONSTRAINT chk_loan_status CHECK (loan_status IN ('ACTIVE', 'RETURNED', 'OVERDUE', 'LOST'))
+);

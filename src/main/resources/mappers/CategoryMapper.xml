@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cessadev.library_system.infrastructure.adapters.persistence.mapper.CategoryMapper">
+
+    <resultMap id="CategoryResultMap" type="com.cessadev.library_system.domain.Category">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+    </resultMap>
+
+    <!-- Consulta para obtener todas las categorías -->
+    <select id="findAll" resultMap="CategoryResultMap">
+        SELECT * FROM Category
+    </select>
+
+    <!-- Consulta para obtener una categoría por ID -->
+    <select id="findById" parameterType="java.lang.Long" resultMap="CategoryResultMap">
+        SELECT * FROM Category WHERE id = #{id}
+    </select>
+</mapper>

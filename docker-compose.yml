@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  oracle-db:
+    image: gvenzl/oracle-xe:18.4.0-slim
+    container_name: library_db
+    environment:
+      - ORACLE_PASSWORD=root
+      - APP_USER=cessadev
+      - APP_USER_PASSWORD=root
+      - ORACLE_DATABASE=library_db
+    ports:
+      - "1521:1521"
+    healthcheck:
+      test: ["CMD", "sqlplus", "-L", "system/root@//localhost:1521/XEPDB1", "<<<", "SELECT 1 FROM DUAL"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped

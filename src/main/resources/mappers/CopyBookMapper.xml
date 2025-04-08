@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cessadev.library_system.infrastructure.adapters.persistence.mapper.CopyBookMapper">
+
+    <resultMap id="CopyBookResultMap" type="com.cessadev.library_system.domain.CopyBook">
+        <id property="id" column="id"/>
+        <result property="code" column="code"/>
+        <result property="status" column="status"
+                typeHandler="com.cessadev.library_system.infrastructure.config.mybatis.handler.CopyBookStatusTypeHandler"
+                javaType="com.cessadev.library_system.domain.enums.ECopyBookStatus"/>
+
+        <association property="book" javaType="com.cessadev.library_system.domain.Book">
+            <id property="id" column="book_id"/>
+            <result property="title" column="book_title"/>
+            <result property="isbn" column="book_isbn"/>
+        </association>
+    </resultMap>
+
+    <!-- Consulta para obtener un ejemplar por ID -->
+    <select id="findById" parameterType="java.lang.Long" resultMap="CopyBookResultMap">
+        SELECT cb.*, b.title as book_title, b.isbn as book_isbn
+        FROM BookCopy cb
+        JOIN Book b ON cb.book_id = b.id
+        WHERE cb.id = #{id,jdbcType=NUMERIC}
+    </select>
+
+    <select id="findByBookId" parameterType="java.lang.Long" resultMap="CopyBookResultMap">
+        SELECT * FROM BookCopy
+        WHERE book_id = #{bookId}
+    </select>
+
+    <delete id="deleteByBookId" parameterType="java.lang.Long">
+        DELETE FROM BookCopy
+        WHERE book_id = #{bookId}
+    </delete>
+
+    <select id="findAvailableByBookId" parameterType="java.lang.Long" resultMap="CopyBookResultMap">
+        SELECT
+        cb.id,
+        cb.code,
+        cb.status,
+        cb.book_id,
+        b.title as book_title
+        FROM BookCopy cb
+        JOIN Book b ON cb.book_id = b.id
+        WHERE cb.book_id = #{bookId}
+        AND cb.status = 'AVAILABLE'
+        ORDER BY cb.code ASC
+    </select>
+
+    <select id="findAvailableCopies" resultMap="CopyBookResultMap">
+        SELECT cb.*, b.title as book_title, b.id as book_id
+        FROM BookCopy cb
+        JOIN Book b ON cb.book_id = b.id
+        WHERE cb.status = 'AVAILABLE'
+        ORDER BY cb.code ASC
+    </select>
+
+    <!-- Consulta para obtener ejemplares disponibles por ID de libro -->
+    <select id="findAvailableCopiesByBookId" parameterType="java.lang.Long" resultMap="CopyBookResultMap">
+        SELECT cb.*, b.title as book_title, b.isbn as book_isbn
+        FROM BookCopy cb
+        JOIN Book b ON cb.book_id = b.id
+        WHERE cb.book_id = #{bookId,jdbcType=NUMERIC}
+        AND cb.status = 'AVAILABLE'
+    </select>
+
+    <!-- Actualizar estado de un ejemplar -->
+    <update id="updateStatus" parameterType="map">
+        UPDATE BookCopy
+        SET status = #{status,jdbcType=VARCHAR,typeHandler=com.cessadev.library_system.infrastructure.config.mybatis.handler.CopyBookStatusTypeHandler}
+        WHERE id = #{id,jdbcType=NUMERIC}
+    </update>
+
+    <!-- Buscar ejemplar por código -->
+    <select id="findByCode" parameterType="java.lang.String" resultMap="CopyBookResultMap">
+        SELECT cb.*, b.title as book_title, b.isbn as book_isbn
+        FROM BookCopy cb
+        JOIN Book b ON cb.book_id = b.id
+        WHERE cb.code = #{code,jdbcType=VARCHAR}
+    </select>
+
+    <!-- Insertar un nuevo ejemplar -->
+    <insert id="save" parameterType="com.cessadev.library_system.domain.CopyBook">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">
+            SELECT bookcopy_seq.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO BookCopy (id, code, status, book_id)
+        VALUES (
+        #{id,jdbcType=NUMERIC},
+        #{code,jdbcType=VARCHAR},
+        #{status,jdbcType=VARCHAR,typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+        #{book.id,jdbcType=NUMERIC}
+        )
+    </insert>
+
+    <!-- Verificar existencia de ejemplar por ID -->
+    <select id="existsById" parameterType="java.lang.Long" resultType="boolean">
+        SELECT CASE WHEN COUNT(id) > 0 THEN 1 ELSE 0 END
+        FROM BookCopy
+        WHERE id = #{id,jdbcType=NUMERIC}
+    </select>
+</mapper>

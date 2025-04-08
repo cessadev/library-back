@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cessadev.library_system.infrastructure.adapters.persistence.mapper.StudentMapper">
+
+    <resultMap id="StudentResultMap" type="com.cessadev.library_system.domain.Student">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="lastname" column="lastname"/>
+        <result property="identification" column="identification"/>
+        <result property="email" column="email"/>
+        <result property="course" column="course"
+                typeHandler="com.cessadev.library_system.infrastructure.config.mybatis.handler.CourseStudentTypeHandler"
+                javaType="com.cessadev.library_system.domain.enums.ECourseStudent"/>
+    </resultMap>
+
+    <!-- Consulta para obtener un estudiante por ID -->
+    <select id="findById" parameterType="java.lang.Long" resultMap="StudentResultMap">
+        SELECT *
+        FROM Student
+        WHERE id = #{id,jdbcType=NUMERIC}
+    </select>
+
+    <!-- Consulta para obtener todos los estudiantes -->
+    <select id="findAll" resultMap="StudentResultMap">
+        SELECT *
+        FROM Student
+        ORDER BY lastname, name
+    </select>
+
+    <!-- Consulta para obtener estudiante por identificación -->
+    <select id="findByIdentification" parameterType="java.lang.String" resultMap="StudentResultMap">
+        SELECT *
+        FROM Student
+        WHERE identification = #{identification,jdbcType=VARCHAR}
+    </select>
+
+    <!-- Insertar un nuevo estudiante -->
+    <insert id="save" parameterType="com.cessadev.library_system.domain.Student">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">
+            SELECT student_seq.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO Student (id, name, lastname, identification, email, course)
+        VALUES (
+        #{id,jdbcType=NUMERIC},
+        #{name,jdbcType=VARCHAR},
+        #{lastname,jdbcType=VARCHAR},
+        #{identification,jdbcType=VARCHAR},
+        #{email,jdbcType=VARCHAR},
+        #{course,jdbcType=VARCHAR,typeHandler=org.apache.ibatis.type.EnumTypeHandler}
+        )
+    </insert>
+
+    <!-- Actualizar un estudiante existente -->
+    <update id="update" parameterType="com.cessadev.library_system.domain.Student">
+        UPDATE Student
+        SET name = #{name,jdbcType=VARCHAR},
+        lastname = #{lastname,jdbcType=VARCHAR},
+        identification = #{identification,jdbcType=VARCHAR},
+        email = #{email,jdbcType=VARCHAR},
+        course = #{course,jdbcType=VARCHAR,typeHandler=org.apache.ibatis.type.EnumTypeHandler}
+        WHERE id = #{id,jdbcType=NUMERIC}
+    </update>
+
+    <!-- Verificar existencia de estudiante por ID -->
+    <select id="existsById" parameterType="java.lang.Long" resultType="boolean">
+        SELECT CASE WHEN COUNT(id) > 0 THEN 1 ELSE 0 END
+        FROM Student
+        WHERE id = #{id,jdbcType=NUMERIC}
+    </select>
+</mapper>
